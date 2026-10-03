@@ -15,8 +15,8 @@ This roadmap governs the progressive development of NearbyAid.
 
 | Phase | Title | Summary / Boundary | Status |
 |---|---|---|---|
-| **Setup** | Project & Environment Preparation | Environment check, Git & GitHub setup, docs, architecture contracts, build verification | **Current** |
-| **Phase 1** | UI/UX Foundation | Accessible design system, high-contrast theme, responsive layout, search inputs, emergency banner | Pending |
+| **Setup** | Project & Environment Preparation | Environment check, Git & GitHub setup, docs, architecture contracts, build verification | **Completed** |
+| **Phase 1** | UI/UX Foundation | Accessible design system, high-contrast theme, responsive layout, search inputs, emergency banner | **Completed** |
 | **Phase 2** | Postcode & Location System | UK postcode validation, normalisation, postcodes.io integration, browser geolocation with fallbacks | Pending |
 | **Phase 3** | Database & Service Search Engine | Cloudflare D1 schema, local migrations, spatial/distance queries, search indexing | Pending |
 | **Phase 4** | NHS / Service Data Integration | Authoritative data ingestion pipeline, data normalization, category mapping | Pending |

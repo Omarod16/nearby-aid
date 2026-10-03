@@ -1,26 +1,57 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f8fafc;
+  --foreground: #091e42;
+  --text-scale: 1rem; /* 16px default */
+  --font-scale-factor: 1;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Accessible text-size scaling modes */
+html[data-text-size="normal"] {
+  --text-scale: 1rem; /* 16px */
+  --font-scale-factor: 1;
+  font-size: 16px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+html[data-text-size="large"] {
+  --text-scale: 1.125rem; /* 18px */
+  --font-scale-factor: 1.125;
+  font-size: 18px;
+}
+
+html[data-text-size="xlarge"] {
+  --text-scale: 1.25rem; /* 20px */
+  --font-scale-factor: 1.25;
+  font-size: 20px;
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Universal high-contrast visible focus rings */
+:focus-visible {
+  outline: 3px solid #0284c7 !important;
+  outline-offset: 3px !important;
+}
+
+/* Tap target utility to enforce min 48px */
+.min-touch-target {
+  min-height: 48px;
+  min-width: 48px;
 }

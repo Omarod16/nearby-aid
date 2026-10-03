@@ -1,69 +1,177 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import React, { useState, useCallback } from 'react';
+import { Header } from '@/components/layout/Header';
+import { Footer } from '@/components/layout/Footer';
+import { EmergencyBanner } from '@/components/ui/EmergencyBanner';
+import { PostcodeSearch } from '@/components/search/PostcodeSearch';
+import { CategoryTiles } from '@/components/services/CategoryTiles';
+import { TrustSection } from '@/components/ui/TrustSection';
+import { ResultsView } from '@/components/services/ResultsView';
+import { ErrorState } from '@/components/ui/StatusStates';
+import {
+  queryMockServices,
+  MockSearchResult,
+} from '@/lib/services/mockServiceCoordinator';
+import { ServiceCategory } from '@/types/service';
+
+export default function HomePage() {
+  const [searchedPostcode, setSearchedPostcode] = useState<string>('');
+  const [activeCategory, setActiveCategory] = useState<ServiceCategory | 'all'>('all');
+  const [sortBy, setSortBy] = useState<'nearest' | 'name'>('nearest');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [searchResult, setSearchResult] = useState<MockSearchResult | null>(null);
+
+  // Perform search query
+  const executeSearch = useCallback(
+    async (postcode: string, category: ServiceCategory | 'all', sort: 'nearest' | 'name') => {
+      setIsLoading(true);
+      setErrorMessage(null);
+
+      try {
+        // Small simulated delay (300ms) for realistic UX response
+        const res = await queryMockServices({
+          postcode,
+          category,
+          sortBy: sort,
+          simulateDelayMs: 300,
+        });
+        setSearchResult(res);
+        setSearchedPostcode(postcode);
+      } catch (err) {
+        setErrorMessage(
+          err instanceof Error
+            ? err.message
+            : 'Unable to load services. Please check your connection and try again.'
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    []
+  );
+
+  // Trigger search from Postcode Search form
+  const handleSearchSubmit = (postcode: string) => {
+    executeSearch(postcode, activeCategory, sortBy);
+  };
+
+  // Trigger selection from Category Tiles on Homepage
+  const handleTileCategorySelect = (category: ServiceCategory | 'all') => {
+    setActiveCategory(category);
+    // If user hasn't typed a postcode yet, default to central London sample 'SW1A 1AA'
+    const targetPostcode = searchedPostcode || 'SW1A 1AA';
+    executeSearch(targetPostcode, category, sortBy);
+  };
+
+  // Change category inside Results View
+  const handleFilterCategoryChange = (category: ServiceCategory | 'all') => {
+    setActiveCategory(category);
+    if (searchedPostcode) {
+      executeSearch(searchedPostcode, category, sortBy);
+    }
+  };
+
+  // Change sort order inside Results View
+  const handleSortChange = (sort: 'nearest' | 'name') => {
+    setSortBy(sort);
+    if (searchedPostcode) {
+      executeSearch(searchedPostcode, activeCategory, sort);
+    }
+  };
+
+  // Reset back to home search
+  const handleResetSearch = () => {
+    setSearchedPostcode('');
+    setSearchResult(null);
+    setErrorMessage(null);
+    setActiveCategory('all');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
+    <div className="flex min-h-screen flex-col">
+      {/* 1. Accessible Global Header */}
+      <Header onResetSearch={handleResetSearch} />
+
+      {/* 2. Main Content Container */}
+      <main id="main-content" className="flex-1">
+        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 space-y-8">
+          {/* Emergency Information Box */}
+          <EmergencyBanner />
+
+          {/* Error State if triggered */}
+          {errorMessage && (
+            <ErrorState
+              message={errorMessage}
+              onRetry={() => executeSearch(searchedPostcode || 'SW1A 1AA', activeCategory, sortBy)}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+          )}
+
+          {/* View Switch: Results View VS Homepage Search */}
+          {!errorMessage && searchResult ? (
+            <ResultsView
+              postcode={searchResult.searchedPostcode}
+              services={searchResult.services}
+              totalCount={searchResult.totalCount}
+              activeCategory={activeCategory}
+              onCategoryChange={handleFilterCategoryChange}
+              sortBy={sortBy}
+              onSortChange={handleSortChange}
+              onChangePostcode={handleResetSearch}
+              isLoading={isLoading}
+            />
+          ) : (
+            !errorMessage && (
+              <div className="space-y-12 py-4">
+                {/* Hero Section */}
+                <section
+                  aria-labelledby="hero-title"
+                  className="text-center max-w-3xl mx-auto space-y-4 pt-2 pb-4"
+                >
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-100/90 px-3.5 py-1 text-xs font-bold text-blue-900 ring-1 ring-blue-700/10">
+                    <span className="h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
+                    Simple UK Healthcare Locator
+                  </span>
+
+                  <h1
+                    id="hero-title"
+                    className="text-3xl sm:text-5xl font-black tracking-tight text-slate-950 leading-[1.15]"
+                  >
+                    Find essential services near you
+                  </h1>
+
+                  <p className="text-base sm:text-xl font-medium text-slate-700 max-w-2xl mx-auto leading-relaxed">
+                    Quickly find your nearest verified A&E, local pharmacy, GP surgery, dental practice, or Urgent Treatment Centre.
+                  </p>
+
+                  {/* Primary Postcode Search */}
+                  <div className="pt-4">
+                    <PostcodeSearch
+                      initialPostcode={searchedPostcode}
+                      onSearch={handleSearchSubmit}
+                      isLoading={isLoading}
+                    />
+                  </div>
+                </section>
+
+                {/* Service Category Tiles */}
+                <CategoryTiles
+                  onSelectCategory={handleTileCategorySelect}
+                  activeCategory={activeCategory}
+                />
+
+                {/* Trust & Principles Section */}
+                <TrustSection />
+              </div>
+            )
+          )}
         </div>
       </main>
+
+      {/* 3. Global Footer with Disclaimers */}
+      <Footer />
     </div>
   );
 }
